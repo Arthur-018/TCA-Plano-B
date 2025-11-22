@@ -1,5 +1,3 @@
-
-
 package com.google.genai.Financas.Principal;
 
 import com.google.genai.Financas.Modelos.Investment;
@@ -13,13 +11,25 @@ import java.util.Scanner;
 public class PerfilFinanceiro {
 
     public void pefilFinanceiro() {
+
+
+
+
+        LeitorExtrato leitorExtrato = new LeitorExtrato();
+//        String respostaExtrato = leitorExtrato.extrato();
+        System.out.println("===============" +
+                "Lendo o extrato" +
+                "==============");
+        System.out.println(leitorExtrato.extrato());
+
+
+
         Scanner scan = new Scanner(System.in);
         int pontos = 0;
 
-        System.out.println("=== SIMULADOR DE PERFIL DE INVESTIDOR ===");
-        System.out.println("Responda as perguntas abaixo:\n");
+        System.out.println("Agora responda algumas perguntas para definir seu perfil:");
 
-        System.out.println("1️⃣ Qual é o seu conhecimento sobre investimentos?");
+        System.out.println("\n1️⃣ Qual é o seu conhecimento sobre investimentos?");
         System.out.println("(a) Nenhum conhecimento");
         System.out.println("(b) Conhecimento básico");
         System.out.println("(c) Experiência avançada");
@@ -40,56 +50,57 @@ public class PerfilFinanceiro {
         System.out.println("\n3️⃣ Qual é o seu objetivo de investimento?");
         System.out.println("(a) Preservação de capital");
         System.out.println("(b) Crescimento moderado");
-        System.out.println("(c) Alto crescimento (alto risco)");
+        System.out.println("(c) Alto crescimento");
         resposta = scan.nextLine();
         if (resposta.equalsIgnoreCase("a")) pontos += 1;
         else if (resposta.equalsIgnoreCase("b")) pontos += 2;
         else if (resposta.equalsIgnoreCase("c")) pontos += 3;
 
-        System.out.println("\n4️⃣ Qual horizonte de tempo você planeja manter seus investimentos?");
-        System.out.println("(a) Curto prazo (menos de 1 ano)");
-        System.out.println("(b) Médio prazo (1 a 5 anos)");
-        System.out.println("(c) Longo prazo (mais de 5 anos)");
+        System.out.println("\n4️⃣ Qual horizonte de tempo planeja manter seus investimentos?");
+        System.out.println("(a) Curto prazo");
+        System.out.println("(b) Médio prazo");
+        System.out.println("(c) Longo prazo");
         resposta = scan.nextLine();
         if (resposta.equalsIgnoreCase("a")) pontos += 1;
         else if (resposta.equalsIgnoreCase("b")) pontos += 2;
         else if (resposta.equalsIgnoreCase("c")) pontos += 3;
 
-        String perfil = "";
+        String perfil;
         if (pontos <= 7) perfil = "Conservador";
         else if (pontos <= 11) perfil = "Intermediário";
         else perfil = "Experiente";
 
         System.out.println("\nSeu perfil de investidor é: " + perfil.toUpperCase());
 
+
         mostrarInvestimentos(perfil);
+
         scan.close();
     }
 
     private void mostrarInvestimentos(String perfil) {
         BrapiClient brapi = new BrapiClient();
 
-        System.out.println("\n🇧🇷 AÇÕES NACIONAIS (Recomendadas para " + perfil.toUpperCase() + "):");
+        System.out.println("\n🇧🇷 AÇÕES NACIONAIS (Perfil: " + perfil.toUpperCase() + ")");
         List<Investment> nationalStocks = brapi.getNationalStocks();
         List<Investment> filteredBrapi = filtrarInvestimentos(nationalStocks, perfil);
 
         if (filteredBrapi.isEmpty()) {
-            System.out.println("Nenhuma ação nacional disponível para o perfil " + perfil.toUpperCase() + " que se enquadre nos critérios de risco.");
+            System.out.println("Nenhuma ação nacional disponível para esse perfil.");
         } else {
-            for (Investment i : filteredBrapi) System.out.println(i);
+            filteredBrapi.forEach(System.out::println);
         }
 
-        System.out.println("\n🌍 AÇÕES INTERNACIONAIS (Recomendadas para " + perfil.toUpperCase() + "):");
+        System.out.println("\n🌍 AÇÕES INTERNACIONAIS (Perfil: " + perfil.toUpperCase() + ")");
         List<Investment> internationalStocks = brapi.getInternationalStocks();
         List<Investment> filteredInternational = filtrarInvestimentos(internationalStocks, perfil);
 
         if (filteredInternational.isEmpty()) {
-            System.out.println("Nenhuma ação internacional disponível para o perfil " + perfil.toUpperCase() + " que se enquadre nos critérios de risco.");
+            System.out.println("Nenhuma ação internacional disponível para esse perfil.");
         } else {
-            for (Investment i : filteredInternational) System.out.println(i);
+            filteredInternational.forEach(System.out::println);
         }
     }
-
 
     private List<Investment> filtrarInvestimentos(List<Investment> investimentos, String perfil) {
         List<Investment> listaFiltrada = new ArrayList<>();
@@ -107,25 +118,17 @@ public class PerfilFinanceiro {
             minRisk = 1.00;
         }
 
-        final double finalMinRisk = minRisk;
-        final double finalMaxRisk = maxRisk;
-
-        for (Investment investimento : investimentos) {
-            if (investimento.risk() >= finalMinRisk &&
-                    investimento.risk() <= finalMaxRisk &&
-                    investimento.price() >= PRECO_MINIMO) {
-                listaFiltrada.add(investimento);
+        for (Investment inv : investimentos) {
+            if (inv.risk() >= minRisk &&
+                    inv.risk() <= maxRisk &&
+                    inv.price() >= PRECO_MINIMO) {
+                listaFiltrada.add(inv);
             }
         }
 
         listaFiltrada.sort(Comparator.comparingDouble(Investment::risk));
 
-        List<Investment> listaFinal = new ArrayList<>();
         int limite = 3;
-        for (int i = 0; i < listaFiltrada.size() && i < limite; i++) {
-            listaFinal.add(listaFiltrada.get(i));
-        }
-
-        return listaFinal;
+        return listaFiltrada.subList(0, Math.min(limite, listaFiltrada.size()));
     }
 }

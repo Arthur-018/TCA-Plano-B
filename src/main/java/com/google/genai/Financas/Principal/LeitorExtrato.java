@@ -10,37 +10,36 @@ import java.io.IOException;
 public class LeitorExtrato {
 
     private static final String API_KEY = "AIzaSyDQwNQ3rC7lIylLeX4ir9ywErfnd_Q_UJk";
-    String caminhoExtrato = "C:/Users/Skillo-Danilo/Desktop/Extrato-01.pdf";
-    String caminhoPrompts = "C:/Users/Skillo-Danilo/Desktop/historico_prompts.pdf";
 
-    public void extrato() throws IOException {
+    private String caminhoExtrato = "C:/Users/toled/Downloads/extrato.pdf";
+
+    public String extrato() {
         try {
             String textoExtrato = LeitorPDF.lerTextoDoPDF(caminhoExtrato);
-            String textoPrompts = LeitorPDF.lerTextoDoPDF(caminhoPrompts);
 
-            GenerateContentResponse response;
-            {
-                Client client = Client.builder().apiKey(API_KEY).build();
+            Client client = Client.builder().apiKey(API_KEY).build();
 
-                try {
-                    response = client.models.generateContent(
-                            "gemini-2.5-flash",
-                            textoExtrato + " Leia meu extrato e diz como posso economizar,e separa meus gastos em categorias, em um texto normal, sem furila, sem negrito sem nada",
-                            null
-                    );
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (HttpException e) {
-                    throw new RuntimeException(e);
-                }
-                System.out.println(response.text());
+            GenerateContentResponse response = client.models.generateContent(
+                    "gemini-2.5-flash",
+                    textoExtrato +
+                            " Leia meu extrato e diz como posso economizar, " +
+                            "e separa meus gastos em categorias, em um texto normal, " +
+                            "sem firulas, sem negrito, sem markdown.",
+                    null
+            );
 
-
+            if (response == null || response.text() == null) {
+                return "Não houve resposta do Gemini.";
             }
+
+            return response.text();
+
         } catch (IOException e) {
-            System.out.println("Erro de leitura de arquivo ou comunicação: " + e.getMessage());
+            return "Erro de leitura de arquivo ou comunicação: " + e.getMessage();
+        } catch (HttpException e) {
+            return "Erro HTTP ao acessar a API Gemini: " + e.getMessage();
         } catch (Exception e) {
-            System.out.println("Erro inesperado: " + e.getMessage());
+            return "Erro inesperado: " + e.getMessage();
         }
     }
 }
